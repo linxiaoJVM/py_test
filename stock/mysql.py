@@ -7,7 +7,7 @@ import pandas as pd
 import tushare as ts
 from sqlalchemy import create_engine 
 
-engine_ts = create_engine('mysql+pymysql://boss3:frJfx^ormd8aybpAp2@rm-2ze8vch3mlfl995kr90110.mysql.rds.aliyuncs.com/pinpoint')
+engine_ts = create_engine('mysql+pymysql://boss:boss@127.0.0.1/aa')
 
 def read_data():
     sql = """SELECT * FROM stock_daily LIMIT 20"""
