@@ -8,7 +8,7 @@ import random
 import string
 
 config = {
-    'host': 'rm-2ze0q80w59h4uyvx4rw.mysql.rds.aliyuncs.com',
+    'host': '127.0.0.1',
     'port': 3306,
     'user': 'xin',
     'password': '48sdf37EB7',
