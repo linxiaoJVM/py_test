@@ -47,7 +47,7 @@ if __name__ == '__main__':
 
     # 每天数据，手动执行
     data = {
-        "cal_date": ['20251023']
+        "cal_date": ['20251024']
     }
     trade_cal = pd.DataFrame(data)
 

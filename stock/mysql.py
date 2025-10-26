@@ -7,10 +7,11 @@ import pandas as pd
 import tushare as ts
 from sqlalchemy import create_engine 
 
-engine_ts = create_engine('mysql+pymysql://boss:boss@127.0.0.1/aa')
+engine_ts = create_engine('mysql+pymysql://boss3:frJfx^ormd8aybpAp2@rm-2ze8vch3mlfl995kr90110.mysql.rds.aliyuncs.com/pinpoint')
 
 def read_data():
-    sql = """SELECT * FROM stock_daily LIMIT 20"""
+    sql = """select * from stock_daily where cal_trade_date > '2025-05-28' ORDER BY cal_trade_date ASC"""
+    # sql = """select * from stock_daily where ts_code='603516.SH' and cal_trade_date >= '2025-04-30' and cal_trade_date <= '2025-07-16' ORDER BY cal_trade_date"""
     df = pd.read_sql_query(sql, engine_ts)
     return df
 

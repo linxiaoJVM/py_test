@@ -15,15 +15,37 @@ import stock.mysql as mysql
 
 # 创建一个简单的 DataFrame
 data = {
-    # "AAPL": [150, 152, 153, 151, 155],
-    # "GOOGL": [2800, 2820, 2810, 2830, 2840],
-    # "AMZN": [3400, 3420, 3410, 3430, 3440],
-    "cal_date": [20200101, 20200102, 20200103, 20200104, 20200123]
+    "ts_code": ['000031.SZ', '000131.SZ', '000031.SZ', '000034.SZ', '000031.SZ'],
+    "trade_date": ['20251025', '20251022', '20251022', '20251024', '20251021'],
+    "open": [22.56, 45.0, 25.12, 56.36, 20]
 }
 # data = [['Google', 10], ['Runoob', 12], ['Wiki', 13]]
-# df = pd.DataFrame(data)
+df = pd.DataFrame(data)
 # # 查看 DataFrame
-# print(df.info())
+# print(df)
+grouped = df.groupby('ts_code')
+# grouped = df.groupby('ts_code').apply(lambda x: x.sort_values('trade_date', ascending=True)).reset_index(drop=True)
+# print(grouped)
+
+for ts_code,df_code in grouped:
+    # print(ts_code)
+    print(df_code)
+    df = df_code.sort_values('trade_date', ascending=True)
+    df.set_index('trade_date', inplace=True)
+    print( df )
+    stock_data = {}
+    stock_data[ts_code] = df
+    # print(stock_data)
+    for stock_code, data in stock_data.items():
+        print(stock_code)
+        print(data)
+
+
+# for ts_code in df['ts_code'].unique():
+#     df_code = df[df['ts_code'] == ts_code]
+#     print(ts_code)
+#     print(df_code)
+
 # print(df)
 # df['trad_date'] = df['cal_date'].apply(lambda x: datetime.strptime(str(x), '%Y%m%d'))
 # print(df)
@@ -117,6 +139,6 @@ data = {
 # plt.grid(True)
 # plt.show()
 
-df = mysql.read_data()
-print(df['close'].pct_change())
-print(df['pct_chg'].rolling(window=5).std())
+# df = mysql.read_data()
+# print(df['close'].pct_change())
+# print(df['pct_chg'].rolling(window=5).std())
