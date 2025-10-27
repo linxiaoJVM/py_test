@@ -7,7 +7,7 @@ import pandas as pd
 import tushare as ts
 from sqlalchemy import create_engine 
 
-engine_ts = create_engine('mysql+pymysql://boss3:frJfx^ormd8aybpAp2@rm-2ze8vch3mlfl995kr90110.mysql.rds.aliyuncs.com/pinpoint')
+engine_ts = create_engine('mysql+pymysql://boss:127.0.0.1/aa')
 
 def read_data():
     sql = """select * from stock_daily where cal_trade_date > '2025-05-28' ORDER BY cal_trade_date ASC"""
@@ -21,15 +21,20 @@ def write_data(df):
     print(res)
     print("------------")
 
+def write_stock_basic(df):
+    res = df.to_sql('stock_basic', engine_ts, index=False, if_exists='append', chunksize=5000)
+    print(res)
+    print("------------")
 
 def get_data():
     pro = ts.pro_api()
-    df = pro.stock_basic()
+    df = pro.stock_basic(exchange='', list_status='L', fields='ts_code,symbol,name,area,industry,list_date')
     return df
 
 
 if __name__ == '__main__':
-    df = read_data()
-    # df = get_data()
-    # write_data(df)
-    print(df)
+    # df = read_data()
+    df = get_data()
+    # print(df)
+    write_stock_basic(df)
+    

@@ -7,7 +7,7 @@ import mysql as mysql
 import pandas as pd
 
 # 初始化pro接口
-pro = ts.pro_api('9d347f0a583f4a2fb87dc561517723e00884ae6dd9f8b2b4ddb440da')
+pro = ts.pro_api()
 
 # c获取交易日
 def get_trade_cal(start_date='', end_date=''):
@@ -38,6 +38,7 @@ def get_daily(trade_date=''):
             time.sleep(1+i)
         else:
             return df
+
       
 if __name__ == '__main__':
     # 获取交易日
@@ -47,7 +48,7 @@ if __name__ == '__main__':
 
     # 每天数据，手动执行
     data = {
-        "cal_date": ['20251024']
+        "cal_date": ['20251027']
     }
     trade_cal = pd.DataFrame(data)
 
