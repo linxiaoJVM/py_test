@@ -80,11 +80,11 @@ def test_2():
         print("=" * 100)
         
          # 保存结果到文件
-        results.to_csv('D:\\工作文件夹\\consolidation_stocks_20251026.csv', index=False)
-        print(f"\n完整结果已保存到: consolidation_stocks_20251026.csv")
+        results.to_csv('D:\\工作文件夹\\consolidation_stocks_20251027.csv', index=False)
+        print(f"\n完整结果已保存到: consolidation_stocks_20251027.csv")
 
         for idx, row in results.head(20).iterrows():
-            print(f"股票: {row['stock_code']}")
+            print(f"股票: {row['stock_code']} {row['name']}")
             print(f"  价格区间涨幅: {row['price_range_pct']:.2%}")
             print(f"  价格区间振幅: {row['amplitude']:.2%}")
             print(f"  波动率: {row['volatility']:.4f}")

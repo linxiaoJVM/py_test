@@ -306,7 +306,10 @@ class ConsolidationStockScreener:
                             })
         
         result_df = pd.DataFrame(results)
+        # 关联股票基本信息
+        stock_basic = mysql.read_stock_basic_data()
+        result = pd.merge(result_df, stock_basic, left_on='stock_code', right_on='ts_code', how='left')
         # if not result_df.empty:
         #     result_df = result_df.sort_values('consolidation_days', ascending=False)
         
-        return result_df
+        return result
