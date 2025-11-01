@@ -72,7 +72,7 @@ def test_2():
 
      # 初始化筛选器
     screener = ConsolidationStockScreener()
-    results = screener.find_consolidation_stocks_2(threshold=50)
+    results = screener.find_consolidation_stocks_3(threshold=50)
 
     # 输出结果
     if not results.empty:
@@ -80,8 +80,8 @@ def test_2():
         print("=" * 100)
         
          # 保存结果到文件
-        results.to_csv('D:\\工作文件夹\\consolidation_stocks_20251027.csv', index=False)
-        print(f"\n完整结果已保存到: consolidation_stocks_20251027.csv")
+        results.to_csv('D:\\工作文件夹\\consolidation_stocks_3_20251030.csv', index=False)
+        print(f"\n完整结果已保存到: consolidation_stocks_3_20251030.csv")
 
         for idx, row in results.head(20).iterrows():
             print(f"股票: {row['stock_code']} {row['name']}")

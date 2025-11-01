@@ -211,6 +211,7 @@ class ConsolidationStockScreener:
         
         return is_consolidation, metrics
     
+    # 横盘选择器 v2
     def find_consolidation_stocks_2(self,threshold=30) -> pd.DataFrame:
          
         """
@@ -288,6 +289,116 @@ class ConsolidationStockScreener:
             if 0 < price_range_pct < 0.25:  # 总涨幅小于25%
                 score += 1
             if amplitude < 0.3:  # 总振幅小于30%
+                score += 1
+            if volatility < 3.0:    # 波动率小于3%
+                score += 1
+            # 判断是否为横盘 (至少满足3个条件)
+            is_consolidation = score >= 3
+
+            if is_consolidation and break_out:
+                            results.append({
+                                'stock_code': stock_code,
+                                'volatility': volatility,
+                                'price_range_pct': price_range_pct,
+                                'amplitude': amplitude,
+                                'break_out': break_out,
+                                'three_day_rise': three_day_rise,
+                                'consolidation_score': score
+                            })
+        
+        result_df = pd.DataFrame(results)
+        # 关联股票基本信息
+        stock_basic = mysql.read_stock_basic_data()
+        result = pd.merge(result_df, stock_basic, left_on='stock_code', right_on='ts_code', how='left')
+        # if not result_df.empty:
+        #     result_df = result_df.sort_values('consolidation_days', ascending=False)
+        
+        return result
+    
+
+    # 横盘选择器 v3
+    def find_consolidation_stocks_3(self,threshold=50) -> pd.DataFrame:
+         
+        """
+          找出横盘指定天数的股票
+        """
+        print(f"开始加载股票数据...寻找横盘 {threshold} 天的股票")
+        all_stocks = self.load_all_stock_data()
+        
+        results = []
+        
+        for stock_code, data in all_stocks.items():
+            if len(data) < threshold:
+                continue
+
+            # if stock_code != '000016.SZ':
+            #     continue
+
+            print(f"分析股票: {stock_code}")
+            # 只取最近threshold天的数据
+            data = data.tail(n=threshold)
+
+            # print(data.head())
+            # 1、计算涨幅
+            # 昨天收盘价
+            pre_close = data.iloc[0]['pre_close']
+            # 最后一天收盘价
+            close = data['close'].iloc[-1]
+
+            # 股价小于 10块的 不考虑
+            if close < 10:
+                continue
+
+            # print(f"pre_close: {pre_close}, close: {close}")
+
+            # 计算涨幅
+            if pre_close != 0:
+               price_range_pct = (close - pre_close) / pre_close
+            else:
+                price_range_pct = 0
+            
+            # print(f"股票: {stock_code}, 涨幅: {price_range_pct:.2%}")
+
+            #2、计算振幅
+            high = data['high']
+            low = data['low']
+            # print(f"high max: {high.max()}, low min: {low.min()}")
+
+            if low.min() != 0:
+               amplitude = (high.max() - low.min()) / low.min()
+            else:
+               amplitude = 0
+            # print(f"股票: {stock_code}, 振幅: {amplitude:.2%}")
+
+            #3、计算波动率
+            pct_chg = data['pct_chg']
+            volatility = pct_chg.std()
+            # print(f"股票: {stock_code}, 波动率: {volatility:.2f}%")
+
+            # 4、是否突破箱体，不包括最后一天(最后一天的收盘价，是否大于前面收盘价的最高价)
+            # print(high[:-1].max())
+            break_out = False
+            if close > data['close'][:-1].max():
+                # print(f"股票: {stock_code}, 突破箱体")
+                break_out = True
+            else:
+                # print(f"股票: {stock_code}, 未突破箱体")
+                break_out = False
+
+            # 5、连续三天上涨
+            three_day_rise = False
+            if (pct_chg.iloc[-3:] > 0).all():
+                # print(f"股票: {stock_code}, 连续三天上涨")
+                three_day_rise = True
+            else:
+                # print(f"股票: {stock_code}, 未连续三天上涨")
+                three_day_rise = False
+            
+            # 综合评分
+            score = 0
+            if 0 < price_range_pct <= 0.15:  # 总涨幅小于15%
+                score += 1
+            if amplitude <= 0.20:  # 总振幅小于20%
                 score += 1
             if volatility < 3.0:    # 波动率小于3%
                 score += 1
