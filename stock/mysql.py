@@ -7,7 +7,7 @@ import pandas as pd
 import tushare as ts
 from sqlalchemy import create_engine 
 
-engine_ts = create_engine('mysql+pymysql://boss3:frJfx^ormd8aybpAp2@rm-2ze8vch3mlfl995kr90110.mysql.rds.aliyuncs.com/pinpoint')
+engine_ts = create_engine('mysql+pymysql://boss:127.0.0.1/aa')
 
 def read_data():
     sql = """select * from stock_daily where cal_trade_date > '2025-05-28' ORDER BY cal_trade_date ASC"""

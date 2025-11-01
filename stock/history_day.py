@@ -7,7 +7,7 @@ import mysql as mysql
 import pandas as pd
 
 # 初始化pro接口
-pro = ts.pro_api('9d347f0a583f4a2fb87dc561517723e00884ae6dd9f8b2b4ddb440da')
+pro = ts.pro_api('aa')
 
 # c获取交易日
 def get_trade_cal(start_date='', end_date=''):
