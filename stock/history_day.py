@@ -5,9 +5,10 @@ import time as time
 import tushare as ts
 import mysql as mysql
 import pandas as pd
+import numpy as np
 
 # 初始化pro接口
-pro = ts.pro_api('aa')
+pro = ts.pro_api()
 
 # c获取交易日
 def get_trade_cal(start_date='', end_date=''):
@@ -22,6 +23,23 @@ def get_trade_cal(start_date='', end_date=''):
     return df
     # print(df)
 
+# 每日指标
+def daily_basic(ts_code='', trade_date=''):
+    for i in range(10):
+        try:
+            while True:
+                df = pro.daily_basic(ts_code=ts_code, trade_date=trade_date,
+                                     fields='ts_code,trade_date,turnover_rate,volume_ratio,pe,pe_ttm,pb,total_mv,circ_mv')
+                if df is None or len(df) == 0:
+                    print("未获取到数据，等待2秒后重试...")
+                    time.sleep(2)
+                else:
+                    break
+        except:
+            print("网络错误，等待(1+i)秒后重试...")
+            time.sleep(1+i)
+        else:
+            return df
 # 按交易日获取当天所有的股票数据
 def get_daily(trade_date=''):
     for i in range(5):
@@ -39,16 +57,21 @@ def get_daily(trade_date=''):
         else:
             return df
 
-      
-if __name__ == '__main__':
-    # 获取交易日
+def test():
+    df = daily_basic('300875.sz','20251105')
+    df['pe'] = df['pe'].fillna(0)
+    df['pe_ttm'] = df['pe_ttm'].fillna(0)
+    print(df.head)
+
+def test_daily():
+   # 获取交易日
     # start_date = '20000101'
     # end_date = '20041231'
     # trade_cal = get_trade_cal(start_date=start_date, end_date=end_date)
 
     # 每天数据，手动执行
     data = {
-        "cal_date": ['20251030']
+        "cal_date": ['20251112']
     }
     trade_cal = pd.DataFrame(data)
 
@@ -64,3 +87,7 @@ if __name__ == '__main__':
         mysql.write_data(df)
         # time.sleep(1)
         # break
+
+if __name__ == '__main__':
+    # test()
+    test_daily()

@@ -5,6 +5,7 @@ from datetime import datetime, timedelta
 import os
 from typing import Dict, List, Tuple
 import mysql as mysql
+import history_day as history_day
 
 
 '''
@@ -326,6 +327,7 @@ class ConsolidationStockScreener:
         all_stocks = self.load_all_stock_data()
         
         results = []
+        latest_date = datetime.now().strftime('%Y%m%d')
         
         for stock_code, data in all_stocks.items():
             if len(data) < threshold:
@@ -350,6 +352,9 @@ class ConsolidationStockScreener:
                 continue
 
             # print(f"pre_close: {pre_close}, close: {close}")
+            # 获取最新一天的日期 trade_date
+            # latest_date = data.index[-1]
+            latest_date = data.index[-1].strftime('%Y%m%d')
 
             # 计算涨幅
             if pre_close != 0:
@@ -415,12 +420,70 @@ class ConsolidationStockScreener:
                                 'three_day_rise': three_day_rise,
                                 'consolidation_score': score
                             })
-        
-        result_df = pd.DataFrame(results)
+        # now = datetime.now()
+        # t = now.strftime('%Y%m%d')
+        basic = []
+        for r in results:
+            # print(r['stock_code'], r['price_range_pct'], r['amplitude'], r['volatility'])
+            # 获取股票每日指标信息
+            df = history_day.daily_basic(r['stock_code'], latest_date)
+            df['pe'] = df['pe'].fillna(0)
+            df['pe_ttm'] = df['pe_ttm'].fillna(0)
+            basic.append({
+                'ts_code': df['ts_code'].values[0],
+                'trade_date': df['trade_date'].values[0],
+                'turnover_rate': df['turnover_rate'].values[0],
+                'volume_ratio': df['volume_ratio'].values[0],
+                'pe': df['pe'].values[0],
+                'pe_ttm': df['pe_ttm'].values[0],
+                'pb': df['pb'].values[0],
+                'total_mv': df['total_mv'].values[0],
+                'circ_mv': df['circ_mv'].values[0]
+            })
+
+        # print(pd.DataFrame(basic))
+        # 合并每日指标数据
+        result = pd.merge(pd.DataFrame(results), pd.DataFrame(basic), left_on='stock_code', right_on='ts_code', how='left')
+
         # 关联股票基本信息
         stock_basic = mysql.read_stock_basic_data()
-        result = pd.merge(result_df, stock_basic, left_on='stock_code', right_on='ts_code', how='left')
+        # 合并股票基本信息
+        result = pd.merge(result, stock_basic, left_on='stock_code', right_on='ts_code', how='left')
         # if not result_df.empty:
         #     result_df = result_df.sort_values('consolidation_days', ascending=False)
-        
+
+        result = result.drop(columns=['ts_code_x', 'trade_date', 'ts_code_y'])
+        # 过滤掉市盈率为0的股票
+        # result = result[result['pe'] > 0]
+        # 过滤掉总市值小于50亿的股票
+        result = result[result['total_mv'] > 500000.0]
+
+        # 将市值转化成亿为单位
+        result['total_mv'] = result['total_mv'] / 10000.0
+        result['circ_mv'] = result['circ_mv'] / 10000.0
+
+        # 总市值四舍五入保留两位小数
+        result['total_mv'] = result['total_mv'].round(2)
+        result['circ_mv'] = result['circ_mv'].round(2)
+
+        # 将列标题转换为中文
+        result = result.rename(columns={
+            'stock_code': '股票代码',
+            'volatility': '波动率',
+            'price_range_pct': '价格区间百分比',
+            'amplitude': '振幅',
+            'break_out': '是否突破箱体',
+            'three_day_rise': '是否连续三天上涨',
+            'consolidation_score': '整理评分',
+            'turnover_rate': '换手率',
+            'volume_ratio': '量比',
+            'pe': '市盈率',
+            'pe_ttm': '市盈率(TTM)',
+            'pb': '市净率',
+            'total_mv': '总市值(亿)',
+            'circ_mv': '流通市值(亿)',
+            'name': '股票名称',
+            'area': '地区',
+            'industry': '行业'
+        })
         return result
