@@ -142,6 +142,12 @@ class ConsolidationStock:
             if data['vol'].iloc[-1] >= 1.5 * data['vol'].iloc[-2]:
                 volume_increase = True
             
+            # 找出当前股票历史中的最高价
+            max_close_df = mysql.read_data_v4(ts_code=stock_code)
+            max_close = max_close_df['max_close'].values[0]
+            # 计算当前价格在历史最高价中的比例
+            price_position = close / max_close
+            
             # 综合评分
             score = 0
             if 0 < price_range_pct <= 0.15:  # 总涨幅小于15%
@@ -153,6 +159,11 @@ class ConsolidationStock:
             # 判断是否为横盘 (至少满足3个条件)
             is_consolidation = score >= 3
 
+            price_range_pct = round(price_range_pct, 4)
+            volatility = round(volatility, 4)
+            amplitude = round(amplitude, 4)
+            price_position = round(price_position, 4)
+
             if is_consolidation and break_out and volume_increase:
                             results.append({
                                 'stock_code': stock_code,
@@ -162,6 +173,9 @@ class ConsolidationStock:
                                 'break_out': break_out,
                                 'three_day_rise': three_day_rise,
                                 'trade_date': latest_date,
+                                'max_close': max_close,
+                                'current_close': close,
+                                'price_position': price_position,   
                                 'consolidation_score': score
                             })
         return results
@@ -230,10 +244,14 @@ class ConsolidationStock:
         result = result.rename(columns={
             'stock_code': '股票代码',
             'volatility': '波动率',
-            'price_range_pct': '价格区间百分比',
+            'price_range_pct': '涨幅',
             'amplitude': '振幅',
             'break_out': '是否突破箱体',
             'three_day_rise': '是否连续三天上涨',
+            'current_close': '当前价格(选中日)',
+            'max_close': '历史最高价',
+            'price_position': '当前价格在历史最高价中的占比',
+            'trade_date': '选中日期',
             'consolidation_score': '整理评分',
             'turnover_rate': '换手率',
             'volume_ratio': '量比',
@@ -307,21 +325,39 @@ class ConsolidationStock:
             volatility = pct_chg.std()
             # print(f"股票: {stock_code}, 波动率: {volatility:.2f}%")
 
-            # 4、计算最大回撤
+            # 4、计算最大回撤，应该找出最大值后面的最小值才是正确的最大回撤
+
             roll_max = (df['close'].max() - df['close'].min()) / df['close'].max()
+            # 找出当前股票历史中的最高价
+            max_close_df = mysql.read_data_v4(ts_code=stock_code)
+            max_close = max_close_df['max_close'].values[0]
+
+            # 查询当前股票，被计算出来的那天的行情数据
+            stock_current_df = mysql.read_data_v5(ts_code=stock_code, end_date=data['cal_trade_date'])
+            current_close = 0
+            price_position = 0.0
+            if not stock_current_df.empty:
+                current_close = stock_current_df['close'].values[0]
+                # 计算当前价格在历史最高价中的比例
+                price_position = current_close / max_close
+
             # print(f"股票: {stock_code}, 最大回撤: {max_drawdown:.2%}")
             # price_range_pct 精确两位小数
             price_range_pct = round(price_range_pct, 4)
             volatility = round(volatility, 4)
             amplitude = round(amplitude, 4)
             roll_max = round(roll_max, 4)
+            price_position = round(price_position, 4)
 
             results.append({
                 'stock_code': stock_code,
                 'volatility': volatility,
                 'price_range_pct': price_range_pct,
                 'amplitude': amplitude,
-                'roll_max': roll_max
+                'roll_max': roll_max,
+                'max_close': max_close,
+                'current_close': current_close,
+                'price_position': price_position
             })
         
         results_df = pd.DataFrame(results)
@@ -336,6 +372,8 @@ class ConsolidationStock:
         results_df['volatility'] = results_df['volatility'].astype(float)
         results_df['amplitude'] = results_df['amplitude'].astype(float)
         results_df['roll_max'] = results_df['roll_max'].astype(float)
+        # 把 price_position 换算成百分比显示
+        results_df['price_position'] = results_df['price_position'].apply(lambda x: f"{x:.2%}")
 
         # 按照涨幅排序
         results_df = results_df.sort_values('price_range_pct', ascending=False)
@@ -346,6 +384,9 @@ class ConsolidationStock:
             'volatility': '波动率',
             'price_range_pct': '价格区间百分比',
             'amplitude': '振幅',
-            'roll_max': '最大回撤'
+            'roll_max': '最大回撤',
+            'current_close': '当前价格(选中日)',
+            'max_close': '历史最高价',
+            'price_position': '当前价格在历史最高价中的占比'
         })
         return results_df

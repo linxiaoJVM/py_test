@@ -3,11 +3,17 @@ Created on 2020年1月30日
 
 @author: JM
 '''
+from urllib import parse
 import pandas as pd
 import tushare as ts
 from sqlalchemy import create_engine 
 
-engine_ts = create_engine('mysql+pymysql://')
+user = "ssd_user"
+password = parse.quote_plus("aaaaaaAA@1234")
+host = "127.0.0.1"
+database = "pinpoint"
+
+engine_ts = create_engine(f'mysql+pymysql://{user}:{password}@{host}/{database}')
 
 def read_data():
     sql = """select * from stock_daily where cal_trade_date > '2025-05-28' ORDER BY cal_trade_date ASC"""
