@@ -137,16 +137,11 @@ class ConsolidationStock:
                 # print(f"股票: {stock_code}, 未连续三天上涨")
                 three_day_rise = False
             
-            # 最后一天的成交量是否大于前一天成交量的1.5倍
+            # 最后一天的成交量是否大于前一天成交量的1.6倍
             volume_increase = False
-            if data['vol'].iloc[-1] >= 1.5 * data['vol'].iloc[-2]:
+            if data['vol'].iloc[-1] >= 1.6 * data['vol'].iloc[-2]:
                 volume_increase = True
-            
-            # 找出当前股票历史中的最高价
-            max_close_df = mysql.read_data_v4(ts_code=stock_code)
-            max_close = max_close_df['max_close'].values[0]
-            # 计算当前价格在历史最高价中的比例
-            price_position = close / max_close
+        
             
             # 综合评分
             score = 0
@@ -158,26 +153,19 @@ class ConsolidationStock:
                 score += 1
             # 判断是否为横盘 (至少满足3个条件)
             is_consolidation = score >= 3
-
-            price_range_pct = round(price_range_pct, 4)
-            volatility = round(volatility, 4)
-            amplitude = round(amplitude, 4)
-            price_position = round(price_position, 4)
-
+            # 突破箱体必须要放量
             if is_consolidation and break_out and volume_increase:
-                            results.append({
-                                'stock_code': stock_code,
-                                'volatility': volatility,
-                                'price_range_pct': price_range_pct,
-                                'amplitude': amplitude,
-                                'break_out': break_out,
-                                'three_day_rise': three_day_rise,
-                                'trade_date': latest_date,
-                                'max_close': max_close,
-                                'current_close': close,
-                                'price_position': price_position,   
-                                'consolidation_score': score
-                            })
+                results.append({
+                    'stock_code': stock_code,
+                    'volatility': volatility,
+                    'price_range_pct': price_range_pct,
+                    'amplitude': amplitude,
+                    'break_out': break_out,
+                    'three_day_rise': three_day_rise,
+                    'trade_date': latest_date,
+                    'current_close': close,
+                    'consolidation_score': score
+                })
         return results
        
 
@@ -204,6 +192,14 @@ class ConsolidationStock:
             df = history_day.daily_basic(r['stock_code'], r['trade_date'])
             df['pe'] = df['pe'].fillna(0)
             df['pe_ttm'] = df['pe_ttm'].fillna(0)
+
+            # 找出当前股票历史中的最高价
+            max_close_df = mysql.read_data_v4(ts_code=r['stock_code'])
+            max_close = max_close_df['max_close'].values[0]
+            # 计算当前价格在历史最高价中的比例
+            price_position = r['current_close'] / max_close
+
+
             basic.append({
                 'ts_code': df['ts_code'].values[0],
                 'turnover_rate': df['turnover_rate'].values[0],
@@ -212,7 +208,9 @@ class ConsolidationStock:
                 'pe_ttm': df['pe_ttm'].values[0],
                 'pb': df['pb'].values[0],
                 'total_mv': df['total_mv'].values[0],
-                'circ_mv': df['circ_mv'].values[0]
+                'circ_mv': df['circ_mv'].values[0],
+                'max_close': max_close,
+                'price_position': price_position
             })
 
         # print(pd.DataFrame(basic))
@@ -240,6 +238,22 @@ class ConsolidationStock:
         result['total_mv'] = result['total_mv'].round(2)
         result['circ_mv'] = result['circ_mv'].round(2)
 
+        result['price_range_pct'] = result['price_range_pct'].round(2)
+        result['volatility'] = result['volatility'].round(2)
+        result['amplitude'] = result['amplitude'].round(2)
+        result['price_position'] = result['price_position'].round(2)
+
+        # 转换数据类型
+        result['price_range_pct'] = result['price_range_pct'].astype(float)
+        result['volatility'] = result['volatility'].astype(float)
+        result['amplitude'] = result['amplitude'].astype(float)
+        result['price_position'] = result['price_position'].astype(float)
+
+        # 把 price_position 换算成百分比显示
+        # result['price_position'] = result['price_position'].apply(lambda x: f"{x:.2%}")
+        new_order = ['stock_code', 'name', 'area', 'industry','trade_date', 'volatility', 'price_range_pct', 'amplitude', 'break_out',
+                     'three_day_rise', 'current_close', 'max_close', 'price_position','turnover_rate', 'volume_ratio', 'pe', 'pe_ttm', 'pb', 'total_mv', 'circ_mv', 'consolidation_score']
+        result = result[new_order]
         # 将列标题转换为中文
         result = result.rename(columns={
             'stock_code': '股票代码',
@@ -269,24 +283,24 @@ class ConsolidationStock:
     def save_result_to_db(self, df: pd.DataFrame):
         # 只需要 股票代码，股票名称，trade_date 字段
 
-        df = df[['股票代码', '股票名称', 'trade_date']]
+        df = df[['股票代码', '股票名称', '选中日期']]
         df = df.rename(columns={
              '股票代码': 'ts_code',
              '股票名称': 'name',
-             'trade_date': 'cal_trade_date',
+             '选中日期': 'cal_trade_date',
         })
         df['cal_trade_date'] = df['cal_trade_date'].apply(lambda x: datetime.strptime(str(x), '%Y%m%d'))
         # print(df)
         mysql.write_result_stock(df)
 
 
-    def benchmark_stocks(self, end_date='', result_end_date='') -> pd.DataFrame:
+    def benchmark_stocks(self, end_date='', result_start_date='', result_end_date='') -> pd.DataFrame:
          
         """
           计算选出股票的盈利指标
         """
         # 从数据库加载选出的股票数据
-        result_df = mysql.read_result_stock_data(result_end_date)
+        result_df = mysql.read_result_stock_data(result_start_date,result_end_date)
         
         results = []
         for index, data in result_df.iterrows():
@@ -295,6 +309,9 @@ class ConsolidationStock:
 
             # 从数据库加载当前股票的历史数据
             df = mysql.read_data_v3(ts_code=stock_code, start_time=data['cal_trade_date'], end_date=end_date)
+            if df.empty:
+                print(f"股票: {stock_code} 在 {data['cal_trade_date']} 到 {end_date} 之间无数据，跳过")
+                continue
             # 1、计算涨幅
             # 第一天收盘价
             pre_close = df.iloc[0]['close']
@@ -355,6 +372,7 @@ class ConsolidationStock:
                 'price_range_pct': price_range_pct,
                 'amplitude': amplitude,
                 'roll_max': roll_max,
+                'trade_date': data['cal_trade_date'],
                 'max_close': max_close,
                 'current_close': current_close,
                 'price_position': price_position
@@ -382,9 +400,10 @@ class ConsolidationStock:
         results_df = results_df.rename(columns={
             'stock_code': '股票代码',
             'volatility': '波动率',
-            'price_range_pct': '价格区间百分比',
+            'price_range_pct': '涨幅',
             'amplitude': '振幅',
             'roll_max': '最大回撤',
+            'trade_date': '选中日期',
             'current_close': '当前价格(选中日)',
             'max_close': '历史最高价',
             'price_position': '当前价格在历史最高价中的占比'

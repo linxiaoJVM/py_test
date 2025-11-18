@@ -8,7 +8,7 @@ import pandas as pd
 import numpy as np
 
 # 初始化pro接口
-pro = ts.pro_api()
+pro = ts.pro_api('')
 
 # c获取交易日
 def get_trade_cal(start_date='', end_date=''):
@@ -71,7 +71,7 @@ def test_daily():
 
     # 每天数据，手动执行
     data = {
-        "cal_date": ['20251112']
+        "cal_date": ['20251117']
     }
     trade_cal = pd.DataFrame(data)
 

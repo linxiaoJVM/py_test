@@ -104,8 +104,8 @@ def benchmark_test():
      # 初始化筛选器
     screener = ConsolidationStock()
 
-    start_date = '20251112'
-    end_date = '20251112'
+    start_date = '20251117'
+    end_date = '20251117'
     trade_cal = history_day.get_trade_cal(start_date=start_date, end_date=end_date)
     # trade_cal['cal_date'] = trade_cal['cal_date'].sort_values()
     for date in trade_cal['cal_date'].sort_values():
@@ -126,18 +126,19 @@ def benchmark_result():
      # 初始化筛选器
     screener = ConsolidationStock()
 
-    result_end_date = '2025-09-01'
-    end_date = '2025-11-12'
-    results = screener.benchmark_stocks(end_date=end_date, result_end_date=result_end_date)
+    result_start_date = '2025-11-01'
+    result_end_date = '2025-12-01'
+    end_date = '2025-11-14'
+    results = screener.benchmark_stocks(end_date=end_date, result_start_date=result_start_date, result_end_date=result_end_date)
     if not results.empty:
         print(f"\n找到 {len(results)} 只股票:")
         print("=" * 100)
-        results.to_csv(f'D:\\stock\\benchmark_result_{result_end_date}.csv', index=False)
-        print(f"\n完整结果已保存到: benchmark_result_{result_end_date}.csv")
+        results.to_csv(f'D:\\stock\\benchmark_result_{result_start_date}.csv', index=False)
+        print(f"\n完整结果已保存到: benchmark_result_{result_start_date}.csv")
        
 
 if __name__ == "__main__":
     # test_1()
-    # benchmark_test()
+    benchmark_test()
     # test_2()
-    benchmark_result()
+    # benchmark_result()
