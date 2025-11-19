@@ -312,6 +312,12 @@ class ConsolidationStock:
             if df.empty:
                 print(f"股票: {stock_code} 在 {data['cal_trade_date']} 到 {end_date} 之间无数据，跳过")
                 continue
+            if len(df) < 3:
+                print(f"股票: {stock_code} 在 {data['cal_trade_date']} 到 {end_date} 之间数据不足，跳过")
+                continue
+            # 第三天涨跌幅计算
+            third_day_pct_chg = df['pct_chg'].iloc[2] if len(df) > 2 else 0
+
             # 1、计算涨幅
             # 第一天收盘价
             pre_close = df.iloc[0]['close']
@@ -375,7 +381,8 @@ class ConsolidationStock:
                 'trade_date': data['cal_trade_date'],
                 'max_close': max_close,
                 'current_close': current_close,
-                'price_position': price_position
+                'price_position': price_position,
+                'third_day_pct_chg': third_day_pct_chg
             })
         
         results_df = pd.DataFrame(results)
@@ -406,6 +413,7 @@ class ConsolidationStock:
             'trade_date': '选中日期',
             'current_close': '当前价格(选中日)',
             'max_close': '历史最高价',
-            'price_position': '当前价格在历史最高价中的占比'
+            'price_position': '当前价格在历史最高价中的占比',
+            'third_day_pct_chg': '第三天涨跌幅',
         })
         return results_df
