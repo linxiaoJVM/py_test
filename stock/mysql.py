@@ -3,12 +3,13 @@ Created on 2020年1月30日
 
 @author: JM
 '''
+from http.client import HTTPException
 from urllib import parse
 import pandas as pd
 import tushare as ts
-from sqlalchemy import create_engine 
+from sqlalchemy import create_engine, text 
 
-user = "aa"
+user = "boss"
 password = parse.quote_plus("frJfx")
 host = "127.0.0.1"
 database = "aa"
@@ -46,7 +47,15 @@ def get_data():
 def read_stock_basic_data():
     sql = """select ts_code,symbol,name,area,industry from stock_basic"""
     # sql = """select * from stock_daily where ts_code='603516.SH' and cal_trade_date >= '2025-04-30' and cal_trade_date <= '2025-07-16' ORDER BY cal_trade_date"""
-    df = pd.read_sql_query(sql, engine_ts)
+    try:
+        with engine_ts.connect() as conn:
+            res = conn.execute(text(sql))
+            rows = res.fetchall()
+    except Exception as e:
+        # 隐藏内部错误信息，返回友好提示
+        raise HTTPException(status_code=500, detail="Database query failed")
+    # df = pd.read_sql_query(sql, engine_ts)
+    df = pd.DataFrame(rows, columns=res.keys())
     return df
 
 def read_result_stock_data(start_time: str = '',end_date: str = ''):
@@ -73,14 +82,23 @@ def read_data_v4(ts_code: str = ''):
 
 def read_data_v5(ts_code: str = '', end_date: str = ''):
     sql = f"""select * from stock_daily where ts_code='{ts_code}' and  cal_trade_date='{end_date}'"""
-    df = pd.read_sql_query(sql, engine_ts)
+    try:
+        with engine_ts.connect() as conn:
+            res = conn.execute(text(sql))
+            rows = res.fetchall()
+    except Exception as e:
+        # 隐藏内部错误信息，返回友好提示
+        raise HTTPException(status_code=500, detail="Database query failed")
+    # df = pd.read_sql_query(sql, engine_ts)
+    df = pd.DataFrame(rows, columns=res.keys())
+    # df = pd.read_sql_query(sql, engine_ts)
     return df
 
 if __name__ == '__main__':
     # df = read_data()
-    df = read_result_stock_data()
+    df = read_data_v5('920982.BJ','2025-11-07')
     print(df)
-    ts_code_list = df['ts_code'].to_list()
-    print(ts_code_list)
+    # ts_code_list = df['ts_code'].to_list()
+    # print(ts_code_list)
     # write_stock_basic(df)
     
