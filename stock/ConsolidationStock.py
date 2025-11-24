@@ -84,8 +84,8 @@ class ConsolidationStock:
             # 最后一天收盘价
             close = data['close'].iloc[-1]
 
-            # 股价小于 10块的 不考虑
-            if close < 10:
+            # 股价小于 5块的 不考虑
+            if close < 5:
                 continue
 
             # print(f"pre_close: {pre_close}, close: {close}")
@@ -124,18 +124,12 @@ class ConsolidationStock:
             if close > data['close'][:-1].max():
                 # print(f"股票: {stock_code}, 突破箱体")
                 break_out = True
-            else:
-                # print(f"股票: {stock_code}, 未突破箱体")
-                break_out = False
 
             # 5、连续三天上涨
             three_day_rise = False
             if (pct_chg.iloc[-3:] > 0).all():
                 # print(f"股票: {stock_code}, 连续三天上涨")
                 three_day_rise = True
-            else:
-                # print(f"股票: {stock_code}, 未连续三天上涨")
-                three_day_rise = False
             
             # 最后一天的成交量是否大于前一天成交量的1.6倍
             volume_increase = False
@@ -197,7 +191,7 @@ class ConsolidationStock:
             max_close_df = mysql.read_data_v4(ts_code=r['stock_code'])
             max_close = max_close_df['max_close'].values[0]
             # 计算当前价格在历史最高价中的比例
-            price_position = r['current_close'] / max_close
+            price_position = r['current_close'] / float(max_close)
 
 
             basic.append({

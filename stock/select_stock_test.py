@@ -104,8 +104,8 @@ def benchmark_test():
      # 初始化筛选器
     screener = ConsolidationStock()
 
-    start_date = '20251117'
-    end_date = '20251117'
+    start_date = '20251124'
+    end_date = '20251124'
     trade_cal = history_day.get_trade_cal(start_date=start_date, end_date=end_date)
     # trade_cal['cal_date'] = trade_cal['cal_date'].sort_values()
     for date in trade_cal['cal_date'].sort_values():
@@ -113,7 +113,7 @@ def benchmark_test():
         # 设置数据截止日期
         end_date_str =  datetime.strptime(str(date), '%Y%m%d')
         # print(f"数据截止日期: {end_date_str}")
-        results = screener.find_stocks(threshold=50, end_date=end_date_str)
+        results = screener.find_stocks(threshold=40, end_date=end_date_str)
         if not results.empty:
             print(f"\n找到 {len(results)} 只横盘股票:")
             print("=" * 100)
@@ -127,8 +127,8 @@ def benchmark_result():
     screener = ConsolidationStock()
 
     result_start_date = '2025-11-01'
-    result_end_date = '2025-12-01'
-    end_date = '2025-11-14'
+    result_end_date = '2025-11-20'
+    end_date = '2025-11-20'
     results = screener.benchmark_stocks(end_date=end_date, result_start_date=result_start_date, result_end_date=result_end_date)
     if not results.empty:
         print(f"\n找到 {len(results)} 只股票:")
