@@ -4,6 +4,7 @@ import talib
 from datetime import datetime, timedelta
 import os
 from typing import Dict, List, Tuple
+from MainForce import MainForce
 import mysql as mysql
 import history_day as history_day
 
@@ -197,7 +198,7 @@ class ConsolidationStock:
             max_close_df = mysql.read_data_v4(ts_code=r['stock_code'])
             max_close = max_close_df['max_close'].values[0]
             # 计算当前价格在历史最高价中的比例
-            price_position = r['current_close'] / max_close
+            price_position = r['current_close'] / float(max_close)
 
 
             basic.append({
@@ -302,6 +303,8 @@ class ConsolidationStock:
         # 从数据库加载选出的股票数据
         result_df = mysql.read_result_stock_data(result_start_date,result_end_date)
         
+        mainForce = MainForce()
+
         results = []
         for index, data in result_df.iterrows():
             stock_code = data['ts_code']
@@ -315,12 +318,12 @@ class ConsolidationStock:
             if len(df) < 3:
                 print(f"股票: {stock_code} 在 {data['cal_trade_date']} 到 {end_date} 之间数据不足，跳过")
                 continue
-            # 第三天涨跌幅计算
-            third_day_pct_chg = df['pct_chg'].iloc[2] if len(df) > 2 else 0
-            # 第四天涨跌幅计算
-            fourth_day_pct_chg = df['pct_chg'].iloc[3] if len(df) > 3 else 0
-            # 第五天涨跌幅计算
-            fifth_day_pct_chg = df['pct_chg'].iloc[4] if len(df) > 4 else 0
+            # # 第三天涨跌幅计算
+            # third_day_pct_chg = df['pct_chg'].iloc[2] if len(df) > 2 else 0
+            # # 第五天涨跌幅计算
+            # fifth_day_pct_chg = df['pct_chg'].iloc[4] if len(df) > 4 else 0
+            # # 第七天涨跌幅计算
+            # seventh_day_pct_chg = df['pct_chg'].iloc[6] if len(df) > 6 else 0
 
             # 1、计算涨幅
             # 第一天收盘价
@@ -368,6 +371,12 @@ class ConsolidationStock:
                 # 计算当前价格在历史最高价中的比例
                 price_position = current_close / max_close
 
+            # 3. 检查控盘形态
+            is_controlled, msg3 = mainForce.check_small_bull_trend(data)
+            controll_value = '非控盘形态'
+            if is_controlled:
+                controll_value = '控盘形态'
+
             # print(f"股票: {stock_code}, 最大回撤: {max_drawdown:.2%}")
             # price_range_pct 精确两位小数
             price_range_pct = round(price_range_pct, 4)
@@ -386,9 +395,9 @@ class ConsolidationStock:
                 'max_close': max_close,
                 'current_close': current_close,
                 'price_position': price_position,
-                'third_day_pct_chg': third_day_pct_chg,
-                'fourth_day_pct_chg': fourth_day_pct_chg,
-                'fifth_day_pct_chg': fifth_day_pct_chg
+                'controll_status': controll_value,
+                'fifth_day_pct_chg': fifth_day_pct_chg,
+                'seventh_day_pct_chg': seventh_day_pct_chg
             })
         
         results_df = pd.DataFrame(results)
@@ -420,8 +429,8 @@ class ConsolidationStock:
             'current_close': '当前价格(选中日)',
             'max_close': '历史最高价',
             'price_position': '当前价格在历史最高价中的占比',
-            'third_day_pct_chg': '第三天涨跌幅',
-            'fourth_day_pct_chg': '第四天涨跌幅',
-            'fifth_day_pct_chg': '第五天涨跌幅'
+            'controll_status': '控盘状态',
+            'fifth_day_pct_chg': '第五天涨跌幅',
+            'seventh_day_pct_chg': '第七天涨跌幅'
         })
         return results_df

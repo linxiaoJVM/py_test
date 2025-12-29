@@ -9,10 +9,10 @@ import pandas as pd
 import tushare as ts
 from sqlalchemy import create_engine, text 
 
-user = "aa"
-password = parse.quote_plus("frJfx")
-host = "127.0.0.1"
-database = "aa"
+user = ""
+password = parse.quote_plus("")
+host = ""
+database = ""
 
 engine_ts = create_engine(f'mysql+pymysql://{user}:{password}@{host}/{database}', pool_size=5, max_overflow=0, pool_recycle=3600)
 

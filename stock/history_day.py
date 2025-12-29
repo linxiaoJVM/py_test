@@ -65,18 +65,18 @@ def test():
 
 def test_daily():
    # 获取交易日
-    # start_date = '20000101'
+    # start_date = '20251201'
     # end_date = '20041231'
     # trade_cal = get_trade_cal(start_date=start_date, end_date=end_date)
 
     # 每天数据，手动执行
     data = {
-        "cal_date": ['20251117']
+        "cal_date": ['20251229']
     }
     trade_cal = pd.DataFrame(data)
 
     # A股日线行情
-    for date in trade_cal['cal_date'].values:
+    for date in trade_cal['cal_date'].sort_values():
         print(date)
         df = get_daily(date)
         # print(df.head)

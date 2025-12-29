@@ -88,7 +88,11 @@ class MainForce:
         """
         subset = df_stock.tail(window).copy()
         
-        # 1. 均线多头排列 (假设df里已经算好了ma20, ma60)
+        # 1. 均线多头排列 
+        # 计算20日和60日均线
+        subset['ma20'] = subset['close'].rolling(20).mean()
+        subset['ma60'] = subset['close'].rolling(60).mean()
+        
         current_ma20 = subset['ma20'].iloc[-1]
         current_ma60 = subset['ma60'].iloc[-1]
         if current_ma20 <= current_ma60:
