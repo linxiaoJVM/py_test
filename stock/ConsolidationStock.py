@@ -313,9 +313,9 @@ class ConsolidationStock:
             if df.empty:
                 print(f"股票: {stock_code} 在 {data['cal_trade_date']} 到 {end_date} 之间无数据，跳过")
                 continue
-            if len(df) < 3:
-                print(f"股票: {stock_code} 在 {data['cal_trade_date']} 到 {end_date} 之间数据不足，跳过")
-                continue
+            # if len(df) < 3:
+            #     print(f"股票: {stock_code} 在 {data['cal_trade_date']} 到 {end_date} 之间数据不足，跳过")
+            #     continue
             # # 第三天涨跌幅计算
             # third_day_pct_chg = df['pct_chg'].iloc[2] if len(df) > 2 else 0
             # # 第五天涨跌幅计算
