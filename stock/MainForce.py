@@ -127,11 +127,12 @@ class MainForce:
         """
         # 1. 判断位置 (Price Rank)
         current_price = df_stock['close'].iloc[-1]
+        # print(type(current_price))
         high_250 = df_stock['close'].rolling(250).max().iloc[-1]
         low_250 = df_stock['close'].rolling(250).min().iloc[-1]
         
         # 计算当前价格在过去一年中的位置 (0-1之间)
-        price_position = (current_price - low_250) / (high_250 - low_250)
+        price_position = (float(current_price) - low_250) / (high_250 - low_250)
         
         # 2. 判断量能 (Volume Ratio)
         vol_ma10 = df_stock['vol'].rolling(10).mean().iloc[-1]

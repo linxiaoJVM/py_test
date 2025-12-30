@@ -302,8 +302,6 @@ class ConsolidationStock:
         """
         # 从数据库加载选出的股票数据
         result_df = mysql.read_result_stock_data(result_start_date,result_end_date)
-        
-        mainForce = MainForce()
 
         results = []
         for index, data in result_df.iterrows():
@@ -371,11 +369,20 @@ class ConsolidationStock:
                 # 计算当前价格在历史最高价中的比例
                 price_position = current_close / max_close
 
+            # 用 end_date 计算出前一年的时间
+            main_start_time = (datetime.strptime(end_date, '%Y-%m-%d') - pd.DateOffset(years=1)).strftime('%Y-%m-%d')
+            main_df = mysql.read_data_v3(ts_code=stock_code, start_time=main_start_time, end_date=end_date)
             # 3. 检查控盘形态
-            is_controlled, msg3 = mainForce.check_small_bull_trend(data)
+            is_controlled, msg3 = MainForce.check_small_bull_trend(main_df)
             controll_value = '非控盘形态'
             if is_controlled:
                 controll_value = '控盘形态'
+
+            # 4. 检查底部放量
+            bottom_vol_value = '非底部堆量'
+            is_bottom_vol, msg4 = MainForce.check_bottom_volume(main_df)
+            if is_bottom_vol:
+                bottom_vol_value = '底部堆量'
 
             # print(f"股票: {stock_code}, 最大回撤: {max_drawdown:.2%}")
             # price_range_pct 精确两位小数
@@ -396,8 +403,7 @@ class ConsolidationStock:
                 'current_close': current_close,
                 'price_position': price_position,
                 'controll_status': controll_value,
-                'fifth_day_pct_chg': fifth_day_pct_chg,
-                'seventh_day_pct_chg': seventh_day_pct_chg
+                'bottom_vol_status': bottom_vol_value
             })
         
         results_df = pd.DataFrame(results)
@@ -430,7 +436,6 @@ class ConsolidationStock:
             'max_close': '历史最高价',
             'price_position': '当前价格在历史最高价中的占比',
             'controll_status': '控盘状态',
-            'fifth_day_pct_chg': '第五天涨跌幅',
-            'seventh_day_pct_chg': '第七天涨跌幅'
+            'bottom_vol_status': '底部堆量'
         })
         return results_df

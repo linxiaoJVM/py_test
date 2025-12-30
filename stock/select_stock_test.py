@@ -126,9 +126,9 @@ def benchmark_result():
      # 初始化筛选器
     screener = ConsolidationStock()
 
-    result_start_date = '2025-11-01'
-    result_end_date = '2025-12-01'
-    end_date = '2025-12-01'
+    result_start_date = '2025-12-01'
+    result_end_date = '2025-12-30'
+    end_date = '2025-12-30'
     results = screener.benchmark_stocks(end_date=end_date, result_start_date=result_start_date, result_end_date=result_end_date)
     if not results.empty:
         print(f"\n找到 {len(results)} 只股票:")
@@ -139,6 +139,6 @@ def benchmark_result():
 
 if __name__ == "__main__":
     # test_1()
-    benchmark_test()
+    # benchmark_test()
     # test_2()
-    # benchmark_result()
+    benchmark_result()
